@@ -84,10 +84,14 @@ function sameDayIn(year, month, day) {
  * The situation of a station.
  * @param {Array} history tuples, oldest first
  * @param {number} today days since 1970-01-01
+ * @param {object} [rules]
+ * @param {string|null} [previous] the class published before: kept while the
+ *   rank stays within one year (1 / years) of its bounds, so a level hovering
+ *   on a bound does not flip the class, and fire a trigger, every day
  * @returns {{ key: string|null, index: number|null, rank: number|null, years: number,
  *   reason: 'empty'|'stale'|'history'|null }}
  */
-export function situationOf(history, today, rules = SITUATION_RULES) {
+export function situationOf(history, today, rules = SITUATION_RULES, previous = null) {
   const series = rankedSeries(history ?? []);
   if (series.length === 0) {
     return { key: null, index: null, rank: null, years: 0, reason: 'empty' };
@@ -122,6 +126,15 @@ export function situationOf(history, today, rules = SITUATION_RULES) {
   let index = CLASS_BOUNDS.findIndex((bound, i) => (i < 2 ? rank < bound : rank <= bound));
   if (index === -1) {
     index = SITUATIONS.length - 1;
+  }
+  const kept = SITUATIONS.indexOf(previous);
+  if (kept !== -1 && kept !== index) {
+    const margin = 1 / references.length;
+    const low = kept === 0 ? -Infinity : CLASS_BOUNDS[kept - 1] - margin;
+    const high = kept === SITUATIONS.length - 1 ? Infinity : CLASS_BOUNDS[kept] + margin;
+    if (rank >= low && rank <= high) {
+      index = kept;
+    }
   }
   return {
     key: SITUATIONS[index],

@@ -77,6 +77,8 @@ Brunnen oder dein Garten, angegeben in den Geräteparametern (`AQUIFER`). Das
 
 Tiefe und Stand werden 45 Tage nach der letzten Messung nicht mehr veröffentlicht; „Letzte Messung“
 sagt immer, wann sie war. Eine Station, die einmal im Monat von Hand abgelesen wird, ist normal.
+Wird die Lage unbekannt, behält der Index seinen letzten Wert: Eine Szenenbedingung auf den Index
+sollte auch prüfen, dass „Grundwasserlage“ nicht unbekannt ist.
 
 ### Wie die Lage geschätzt wird
 

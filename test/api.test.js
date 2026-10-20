@@ -94,19 +94,49 @@ test("Hub'Eau: the requests ask only the useful fields, by the new code", async 
 });
 
 test("Hub'Eau: a 206 page is followed through its next link, on Hub'Eau only", async () => {
-  const row = (day) => ({ date_mesure: day, niveau_nappe_eau: 1, profondeur_nappe: 2 });
+  const station = (id) => ({ bss_id: id });
   let calls = 0;
   const hubeau = new HubEau({
     fetch: async (url) => {
       calls += 1;
       return url.includes('page=2')
-        ? answer(206, { data: [row('2026-10-02')], next: 'https://example.org/page=3' })()
-        : answer(206, { data: [row('2026-10-01')], next: `${HUBEAU_BASE}/chroniques?page=2` })();
+        ? answer(206, { data: [station('BSS000AAAB')], next: 'https://example.org/page=3' })()
+        : answer(206, { data: [station('BSS000AAAA')], next: `${HUBEAU_BASE}/stations?page=2` })();
+    },
+  });
+  assert.equal((await hubeau.stationsOfCommune('31555')).length, 2);
+  assert.equal(calls, 2);
+});
+
+test("Hub'Eau: a history longer than one page is paged by date", async () => {
+  const calls = [];
+  const days = (from, count) =>
+    Array.from({ length: count }, (_, i) => {
+      const date = new Date(Date.parse(`${from}T00:00:00Z`) + i * 86400000);
+      return {
+        date_mesure: date.toISOString().slice(0, 10),
+        niveau_nappe_eau: 1,
+        profondeur_nappe: 2,
+      };
+    });
+  const hubeau = new HubEau({
+    fetch: async (url) => {
+      const params = new URL(url).searchParams;
+      calls.push(params.get('date_debut_mesure'));
+      // A page number is never sent: Hub'Eau stops at 20000 rows deep.
+      assert.equal(params.has('page'), false);
+      return params.has('date_debut_mesure')
+        ? answer(200, { data: days(params.get('date_debut_mesure'), 3) })()
+        : answer(206, {
+            data: days('1970-01-01', 20000),
+            next: `${HUBEAU_BASE}/chroniques?page=2`,
+          })();
     },
   });
   const daily = await hubeau.daily(LOMBEZ);
-  assert.equal(calls, 2);
-  assert.equal(daily.length, 2);
+  assert.deepEqual(calls, [null, '2024-10-04']);
+  assert.equal(daily.length, 20003);
+  assert.equal(daily.at(-1).day, '2024-10-06');
 });
 
 test('HTTP failures become an HttpError: status, network, timeout, not JSON', async () => {

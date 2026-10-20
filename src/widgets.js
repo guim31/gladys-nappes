@@ -91,10 +91,14 @@ export function stationValue(view, language) {
   if (!view.latest) {
     return t(TEXT.waiting, language);
   }
-  if (!view.fresh || view.depth === null) {
+  if (!view.fresh || (view.depth === null && view.level === null)) {
     return clip(`${t(TEXT.silent, language)}${formatMeasurement(view.latest, language)}`);
   }
-  const depth = `${formatNumber(view.depth, language)} m`;
+  // A station without depth gives its level (m NGF) instead.
+  const depth =
+    view.depth === null
+      ? `${formatNumber(view.level, language)} m NGF`
+      : `${formatNumber(view.depth, language)} m`;
   return clip(
     view.situation.key ? `${depth} · ${SITUATION_NAMES[language][view.situation.key]}` : depth,
   );

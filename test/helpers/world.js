@@ -78,6 +78,8 @@ export function createApi() {
     daily,
     realtime,
     down: false,
+    // A promise the requests wait for (holds a cycle in the middle).
+    gate: null,
     requests: [],
 
     /** Add a daily value (and a real-time one at noon UTC when `withRealtime`). */
@@ -159,6 +161,7 @@ export function createApi() {
     async fetch(input) {
       const url = new URL(input);
       api.requests.push(url);
+      await api.gate;
       if (api.down === 'network') {
         throw new TypeError('fetch failed');
       }

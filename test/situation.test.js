@@ -188,3 +188,13 @@ test('merging keeps one value a day, the newest answer winning', () => {
   ]);
   assert.equal(dayString(dayNumber('2024-02-29')), '2024-02-29');
 });
+
+test('a level hovering on a bound keeps its class: one year of margin', () => {
+  const base = built((year) => year - 1990); // 36 years, margin 1/36
+  // 11 → rank 0.319: "normal" without memory, but kept "low" after "low".
+  assert.equal(situationOf(withCurrent(base, 11), TODAY).key, 'normal');
+  assert.equal(situationOf(withCurrent(base, 11), TODAY, undefined, 'low').key, 'low');
+  // Clearly past the bound, the class changes.
+  assert.equal(situationOf(withCurrent(base, 13), TODAY, undefined, 'low').key, 'normal');
+  assert.equal(situationOf(withCurrent(base, 3), TODAY, undefined, 'normal').key, 'very_low');
+});

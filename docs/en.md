@@ -76,7 +76,9 @@ device parameters (`AQUIFER`). The [ADES portal](https://ades.eaufrance.fr) show
 | Last measurement          | Text            | Date of the newest measurement (with the time for real-time values)        |
 
 The depth and the level stop being published 45 days after the last measurement; the "Last
-measurement" feature always says when it was. A station measured by hand once a month is normal.
+measurement" feature always says when it was. A station measured by hand once a month is normal. When
+the situation becomes unknown, the index keeps its last value: a scene condition on it should also
+check that "Groundwater situation" is not unknown.
 
 ### How the situation is estimated
 

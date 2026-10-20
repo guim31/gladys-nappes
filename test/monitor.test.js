@@ -298,3 +298,67 @@ test('poll fallback and reconnection publish the states again', async (t) => {
   await world.monitor.resync(world.monitor.config);
   assert.ok(world.fake.states.length > states, 'everything published again');
 });
+
+test("Hub'Eau down at a restart, a week later: stations and history kept, no silence fired", async (t) => {
+  const first = await createWorld({ config: { stations: `${LOMBEZ}, ${UPS}`, around_home: '0' } });
+  const device = await create(first, LOMBEZ);
+  await first.app.stop();
+  const api = createApi();
+  api.down = 503;
+  first.clock.advance(8 * DAY);
+  const second = await createWorld({
+    config: { stations: `${LOMBEZ}, ${UPS}` },
+    devices: [device],
+    api,
+    clock: first.clock,
+    dataDir: first.dataDir,
+  });
+  t.after(() => second.app.stop());
+  assert.deepEqual(ids(second), [LOMBEZ, UPS], 'followed from the cached metadata');
+  assert.ok(second.monitor.data.history[UPS], 'the history of a station not created is kept');
+  assert.equal(second.fake.sceneEvents.length, 0, "Hub'Eau silent is not a station silent");
+  assert.equal(second.fake.connectionStatus.connected, false);
+});
+
+test('houses unreadable once: the stations around the house stay followed', async (t) => {
+  const world = await createWorld({ config: { around_home: '30' } });
+  t.after(() => world.app.stop());
+  const before = ids(world);
+  t.mock.method(world.gladys, 'getHouses', async () => {
+    throw new Error('Gladys busy');
+  });
+  world.clock.advance(DAY + 1);
+  await world.monitor.runCycle();
+  assert.deepEqual(ids(world), before);
+  assert.doesNotMatch(world.fake.connectionStatus.message?.en ?? '', /give your house/);
+});
+
+test('a device created while a cycle runs gets its states at once', async (t) => {
+  const world = await createWorld({ config: { stations: `${LOMBEZ}, ${UPS}` } });
+  t.after(() => world.app.stop());
+  const device = discovered(world, UPS);
+  // UPS leaves the configuration (its history is dropped); a cycle starts
+  // without it and is held on its first request, while the user creates the
+  // UPS device from a Discover tab still open.
+  await world.fake.configUpdated({ stations: LOMBEZ });
+  assert.equal(world.monitor.data.history[UPS], undefined);
+  let release;
+  world.api.gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  world.clock.advance(DAY);
+  const requests = world.api.requests.length;
+  const running = world.monitor.runCycle();
+  while (world.api.requests.length === requests) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  const created = world.fake.deviceCreated(device);
+  for (let tick = 0; tick < 10; tick += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  world.api.gate = null;
+  release();
+  await running;
+  await created;
+  assert.equal(world.fake.lastState(featureId(device, 'depth')), 5.05);
+});

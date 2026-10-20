@@ -78,6 +78,8 @@ las muestra en un mapa.
 
 La profundidad y el nivel dejan de publicarse 45 días después de la última medición; «Última medición»
 siempre indica cuándo fue. Una estación leída a mano una vez al mes es normal.
+Cuando la situación pasa a desconocida, el índice conserva su último valor: una condición de escena
+sobre el índice debe comprobar también que «Situación del acuífero» no sea desconocida.
 
 ### Cómo se estima la situación
 

@@ -78,6 +78,8 @@ les montre sur une carte.
 
 La profondeur et le niveau ne sont plus publiés 45 jours après la dernière mesure ; « Dernière mesure »
 dit toujours quand elle date. Une station relevée à la main une fois par mois, c'est normal.
+Quand la situation devient inconnue, l'indice garde sa dernière valeur : une condition de scène sur
+l'indice doit aussi vérifier que « Situation de la nappe » n'est pas inconnue.
 
 ### Comment la situation est estimée
 

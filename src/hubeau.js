@@ -171,14 +171,30 @@ export class HubEau {
    * `sinceDay` (YYYY-MM-DD) on.
    */
   async daily(id, sinceDay = null) {
-    const params = { bss_id: id, fields: DAILY_FIELDS, sort: 'asc', size: String(MAX_PAGE_SIZE) };
-    if (sinceDay) {
-      params.date_debut_mesure = sinceDay;
+    // Paged by date, not by page number: Hub'Eau APIs refuse to go deeper than
+    // 20000 rows with `page`, and a daily history since 1970 holds more.
+    const all = [];
+    let from = sinceDay;
+    for (let request = 0; request < MAX_PAGES; request += 1) {
+      const params = { bss_id: id, fields: DAILY_FIELDS, sort: 'asc', size: String(MAX_PAGE_SIZE) };
+      if (from) {
+        params.date_debut_mesure = from;
+      }
+      const rows = await this.rows('chroniques', params, {
+        maxPages: 1,
+        timeoutMs: sinceDay ? undefined : HISTORY_TIMEOUT_MS,
+      });
+      const days = parseDaily(rows);
+      all.push(...days);
+      if (rows.length < MAX_PAGE_SIZE || days.length === 0) {
+        break;
+      }
+      const next = new Date(`${days.at(-1).day}T00:00:00Z`);
+      next.setUTCDate(next.getUTCDate() + 1);
+      from = next.toISOString().slice(0, 10);
     }
-    const rows = await this.rows('chroniques', params, {
-      timeoutMs: sinceDay ? undefined : HISTORY_TIMEOUT_MS,
-    });
-    return parseDaily(rows);
+    // Each request starts the day after the previous one: no overlap.
+    return all;
   }
 
   /** The newest real-time value of a station, or null when it sends none. */

@@ -269,3 +269,7 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   d'une station déjà muette ; après un long arrêt, seul le seuil le plus long franchi part.
 - La boîte envoyée à Hub'Eau autour de la maison est arrondie à 0,05° ; la position n'est écrite
   ni dans `/data` ni dans les logs.
+- **Revue du 20/10/2026, corrigée** : une panne de Hub'Eau ou de `getHouses()` ne doit ni vider
+  `/data` (pas d'élagage tant que la résolution est incomplète), ni déclencher `station_silent`
+  (seules les stations lues au cycle sont jugées) ; hystérésis d'une année (1/N) sur la classe de
+  situation ; l'historique se pagine **par date** (`date_debut_mesure`), jamais par `page`.

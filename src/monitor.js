@@ -200,9 +200,10 @@ export class Monitor {
   }
 
   save() {
-    // Only the followed stations are kept: an unfollowed history is dropped.
+    // Only the followed stations are kept: an unfollowed history is dropped,
+    // never after an incomplete resolution (Hub'Eau or Gladys unreachable).
     const keep = new Set(this.followed());
-    for (const table of ['history', 'realtime', 'situations', 'silence']) {
+    for (const table of this.resolved ? ['history', 'realtime', 'situations', 'silence'] : []) {
       for (const id of Object.keys(this.data[table])) {
         if (!keep.has(id)) {
           delete this.data[table][id];
@@ -307,13 +308,14 @@ export class Monitor {
       complete = false;
       this.failed('resolve', 'warn', `Cannot resolve the stations yet: ${err.message}`);
     }
-    if (ids.length > MAX_STATIONS) {
+    // A failed resolution keeps the stations found before it, and their problems.
+    const configured = complete ? ids : [...new Set([...this.configured, ...ids])];
+    if (configured.length > MAX_STATIONS) {
       problems.tooMany = true;
-      ids.length = MAX_STATIONS;
+      configured.length = MAX_STATIONS;
     }
-    // A failed resolution keeps the stations found before it.
-    this.configured = complete ? ids : [...new Set([...this.configured, ...ids])];
-    this.problems = complete ? problems : { ...this.problems, ...problems };
+    this.configured = configured;
+    this.problems = complete ? problems : this.problems;
     this.resolved = complete;
     for (const code of problems.unknown) {
       this.failed(`unknown:${code}`, 'warn', `Unknown station code: ${code}`);
@@ -336,7 +338,16 @@ export class Monitor {
     if (!cached && unknownAt && now - unknownAt < this.timings.lookupRetryMs) {
       return null;
     }
-    const station = await this.hubeau.station(code);
+    let station;
+    try {
+      station = await this.hubeau.station(code);
+    } catch (err) {
+      // Hub'Eau down: a known station stays followed with its cached metadata.
+      if (cached) {
+        return cached.id;
+      }
+      throw err;
+    }
     if (!station) {
       if (cached) {
         return cached.id;
@@ -357,19 +368,24 @@ export class Monitor {
     this.data.stations[station.id] = { ...station, fetchedAt: this.now() };
   }
 
-  /** The first house of Gladys that has a location, or null. */
+  /** The first house of Gladys that has a location, or null (also when Gladys cannot tell). */
   async house() {
     try {
-      const houses = await this.gladys.getHouses();
-      return (
-        houses.find(
-          (house) => Number.isFinite(house.latitude) && Number.isFinite(house.longitude),
-        ) ?? null
-      );
+      return await this.locatedHouse();
     } catch (err) {
       this.failed('houses', 'warn', `Cannot read the houses of Gladys: ${err.message}`);
       return null;
     }
+  }
+
+  /** The first house that has a location, or null; throws when the houses cannot be read. */
+  async locatedHouse() {
+    const houses = await this.gladys.getHouses();
+    this.recovered('houses', 'The houses of Gladys can be read again');
+    return (
+      houses.find((house) => Number.isFinite(house.latitude) && Number.isFinite(house.longitude)) ??
+      null
+    );
   }
 
   /** `YYYY-MM-DD` of the oldest last measurement a station "in service" may have. */
@@ -391,7 +407,8 @@ export class Monitor {
     ) {
       return cached.ids;
     }
-    const house = await this.house();
+    // A failure to read the houses is not "no house": the resolution is incomplete.
+    const house = await this.locatedHouse();
     if (!house) {
       return null;
     }
@@ -480,6 +497,10 @@ export class Monitor {
     if (!this.data.history[id]) {
       await this.runCycle();
     }
+    if (!this.data.history[id]) {
+      // The cycle in progress had started without this station.
+      await this.runCycle();
+    }
     // The SDK forgot the states of the device: everything is published again.
     await this.publishStates([id]);
     this.requestRefresh();
@@ -534,12 +555,14 @@ export class Monitor {
     let changed = false;
     let failures = 0;
     let lastError = null;
+    const read = new Set();
     for (const [index, id] of ids.entries()) {
       if (index > 0) {
         await this.sleep(this.timings.requestSpacingMs);
       }
       try {
         changed = (await this.refreshStation(id)) || changed;
+        read.add(id);
       } catch (err) {
         failures += 1;
         lastError = err;
@@ -552,7 +575,7 @@ export class Monitor {
       this.recovered('readings', "Hub'Eau answers again");
     }
     for (const id of ids) {
-      changed = (await this.checkStation(id)) || changed;
+      changed = (await this.checkStation(id, read.has(id))) || changed;
     }
     await this.publishStates(this.created());
     await this.updateConnectionStatus();
@@ -598,8 +621,14 @@ export class Monitor {
     return latestOf(this.data.history[id]?.tuples, this.data.realtime[id]?.value ?? null);
   }
 
+  /** The situation, the stored one kept while the rank stays near its class. */
   situation(id) {
-    return situationOf(this.data.history[id]?.tuples ?? [], this.today());
+    return situationOf(
+      this.data.history[id]?.tuples ?? [],
+      this.today(),
+      undefined,
+      this.data.situations[id]?.key ?? null,
+    );
   }
 
   trend(id) {
@@ -612,8 +641,12 @@ export class Monitor {
     return latest ? Math.floor((this.now() - latest.at) / DAY_MS) : null;
   }
 
-  /** Situation change and silence of a station: logs and scene triggers. */
-  async checkStation(id) {
+  /**
+   * Situation change and silence of a station: logs and scene triggers. The
+   * silence is only judged on a station read this cycle: Hub'Eau being down
+   * is not a station without measurement.
+   */
+  async checkStation(id, read = true) {
     let changed = false;
     const situation = this.situation(id);
     const previous = this.data.situations[id];
@@ -625,7 +658,7 @@ export class Monitor {
       }
     }
     const days = this.silentDays(id);
-    if (days === null) {
+    if (days === null || !read) {
       return changed;
     }
     const crossed = SILENCE_DAYS.filter((threshold) => days >= Number(threshold));

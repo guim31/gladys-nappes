@@ -1,77 +1,87 @@
+// -----------------------------------------------------------------------------
+// The `stations` widget: valid content for the core, within its budget (8
+// components, 2 texts), bound to features that exist, in the four languages.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { LANGUAGES } from '../src/config.js';
+import { EAUNES, LAMASQUERE, LOMBEZ, UPS, create, createWorld } from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+const get = async (world, settings = {}, language = 'en') =>
+  (await world.fake.widgetGet('stations', { settings, language })).data.content;
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
-
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
-});
-
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
-    );
-  } finally {
-    simulateLanSession(true);
+function checkBudget(content, devices) {
+  validateWidgetContent(content);
+  assert.ok(content.components.length <= 8);
+  assert.ok(content.components.filter((c) => c.type === 'text').length <= 2);
+  const known = new Set(devices.flatMap((d) => d.features.map((f) => f.external_id)));
+  for (const component of content.components.filter((c) => c.device_feature)) {
+    assert.ok(known.has(component.device_feature), component.device_feature);
   }
+  for (const item of content.components.flatMap((c) => c.items ?? [])) {
+    assert.ok(String(item.value).length <= 40, item.value);
+  }
+}
+
+test('without a station: how to start', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  const content = await get(world, {}, 'fr');
+  assert.match(content.components[0].text, /^Aucune station/);
 });
 
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
+test('overview: one line per station, coloured by its situation', async (t) => {
+  const world = await createWorld({
+    config: { stations: `${LOMBEZ}, ${UPS}, ${EAUNES}, ${LAMASQUERE}` },
+  });
+  t.after(() => world.app.stop());
+  const devices = [];
+  for (const id of [LOMBEZ, UPS, EAUNES, LAMASQUERE]) {
+    devices.push(await create(world, id));
+  }
+  for (const language of LANGUAGES) {
+    checkBudget(await get(world, {}, language), devices);
+  }
+  const content = await get(world, {}, 'fr');
+  const [status, caption, button] = content.components;
+  assert.deepEqual(
+    status.items.map((item) => [item.value, item.color, item.icon]),
+    [
+      ['5,06 m · Très haut', 'info', 'minus'],
+      ['5,05 m · Normal', 'success', 'minus'],
+      ['14,95 m · Très bas', 'danger', 'trending-down'],
+      ['4,28 m', 'neutral', 'clock'],
+    ],
   );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
-  }
+  assert.equal(caption.text, "Source : Hub'Eau, ADES (BRGM) · 19/10/2026");
+  assert.equal(button.link.url, 'https://ades.eaufrance.fr');
 });
 
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
-    });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
+test('one station: live tiles, situation, trend, last measurement and its ADES page', async (t) => {
+  const world = await createWorld({ config: { stations: `${LOMBEZ}, ${LAMASQUERE}` } });
+  t.after(() => world.app.stop());
+  const device = await create(world, LOMBEZ);
+  const silent = await create(world, LAMASQUERE);
+  for (const language of LANGUAGES) {
+    checkBudget(await get(world, { station: device.external_id }, language), [device]);
   }
-});
-
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
+  const content = await get(world, { station: device.external_id }, 'en');
+  const status = content.components.find((c) => c.type === 'status');
+  assert.deepEqual(
+    status.items.map((item) => item.value),
+    ['Very high', 'steady', '19/10/2026'],
   );
-});
+  assert.equal(
+    content.components.at(-1).link.url,
+    'https://ades.eaufrance.fr/Fiche/PtEau?Code=09838D0727/F',
+  );
+  const old = await get(world, { station: silent.external_id }, 'fr');
+  const items = old.components.find((c) => c.type === 'status').items;
+  assert.equal(items[0].value, 'Inconnue : pas de mesure récente');
+  assert.equal(items[2].color, 'success', 'still within 45 days');
 
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+  const gone = await get(world, { station: 'nappes:station:BSS000NONE' }, 'de');
+  assert.equal(gone.components[0].text, 'Diese Station wird nicht mehr verfolgt.');
 });

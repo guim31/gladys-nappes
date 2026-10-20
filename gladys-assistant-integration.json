@@ -1,177 +1,631 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Nappes phréatiques",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Groundwater depth, level and situation near your home (France), from Hub'Eau and the BRGM.",
+    "fr": "Profondeur, niveau et situation des nappes phréatiques près de chez vous, par Hub'Eau et le BRGM.",
+    "de": "Tiefe, Stand und Lage des Grundwassers nahe deinem Zuhause (Frankreich), über Hub'Eau und BRGM.",
+    "es": "Profundidad, nivel y situación de las aguas subterráneas cerca de su casa (Francia), por Hub'Eau."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-nappes:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-nappes/main/cover.png",
+  "categories": ["environment"],
+  "transports": ["cloud"],
+  "location": true,
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your stations",
+        "fr": "Vos stations",
+        "de": "Deine Stationen",
+        "es": "Sus estaciones"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Follow the groundwater stations (piezometers) near you: by code, or the nearest ones to your house. \"Find stations\" below lists them. Save, then create the devices in the Discover tab.",
+        "fr": "Suivez les stations de mesure des nappes (piézomètres) près de chez vous : par code, ou les plus proches de votre maison. « Chercher des stations » ci-dessous les liste. Enregistrez, puis créez les appareils dans l'onglet Découverte.",
+        "de": "Verfolge die Grundwassermessstellen (Piezometer) in deiner Nähe: per Code oder die nächsten zu deinem Haus. „Stationen suchen“ unten listet sie auf. Speichere und lege dann die Geräte im Tab „Entdecken“ an.",
+        "es": "Siga las estaciones de medición de las aguas subterráneas (piezómetros) cercanas: por código o las más cercanas a su casa. «Buscar estaciones» más abajo las enumera. Guarde y cree los dispositivos en la pestaña Descubrir."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-nappes/blob/main/docs/en.md",
+          "label": {
+            "en": "Setup guide",
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "about",
+      "type": "section",
+      "label": {
+        "en": "Sources and limits",
+        "fr": "Sources et limites",
+        "de": "Quellen und Grenzen",
+        "es": "Fuentes y límites"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "Data: Hub'Eau and ADES (BRGM), Licence Ouverte Etalab 2.0, read without an account every 6 hours. The situation is an estimate of this integration, not the official BRGM indicator. Not affiliated with the BRGM.",
+        "fr": "Données : Hub'Eau et ADES (BRGM), Licence Ouverte Etalab 2.0, lues sans compte toutes les 6 heures. La situation est une estimation de cette intégration, pas l'indicateur officiel du BRGM. Non affiliée au BRGM.",
+        "de": "Daten: Hub'Eau und ADES (BRGM), Licence Ouverte Etalab 2.0, alle 6 Stunden ohne Konto gelesen. Die Lage ist eine Schätzung dieser Integration, nicht der offizielle Indikator des BRGM. Nicht mit dem BRGM verbunden.",
+        "es": "Datos: Hub'Eau y ADES (BRGM), Licence Ouverte Etalab 2.0, leídos sin cuenta cada 6 horas. La situación es una estimación de esta integración, no el indicador oficial del BRGM. Sin afiliación con el BRGM."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+      "links": [
+        {
+          "url": "https://hubeau.eaufrance.fr/page/api-piezometrie",
+          "label": {
+            "en": "Hub'Eau piezometry",
+            "fr": "Hub'Eau piézométrie",
+            "de": "Hub'Eau Piezometrie",
+            "es": "Hub'Eau piezometría"
+          }
+        },
+        {
+          "url": "https://ades.eaufrance.fr",
+          "label": {
+            "en": "ADES portal",
+            "fr": "Portail ADES",
+            "de": "ADES-Portal",
+            "es": "Portal ADES"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "stations",
+      "type": "string",
+      "label": {
+        "en": "Station codes",
+        "fr": "Codes des stations",
+        "de": "Stationscodes",
+        "es": "Códigos de estación"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "BSS codes separated by commas, new (BSS002FVWC) or old (09838D0727/F).",
+        "fr": "Codes BSS séparés par des virgules, nouveaux (BSS002FVWC) ou anciens (09838D0727/F).",
+        "de": "BSS-Codes durch Kommas getrennt, neu (BSS002FVWC) oder alt (09838D0727/F).",
+        "es": "Códigos BSS separados por comas, nuevos (BSS002FVWC) o antiguos (09838D0727/F)."
+      },
+      "placeholder": {
+        "en": "e.g. BSS002FVWC",
+        "fr": "ex. BSS002FVWC",
+        "de": "z. B. BSS002FVWC",
+        "es": "p. ej. BSS002FVWC"
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": ""
+    },
+    {
+      "key": "around_home",
+      "type": "select",
+      "label": {
+        "en": "Around my house",
+        "fr": "Autour de ma maison",
+        "de": "Rund um mein Haus",
+        "es": "Alrededor de mi casa"
+      },
+      "description": {
+        "en": "Also follow the 3 nearest stations in service, within this distance of the location of your house in Gladys.",
+        "fr": "Suivre aussi les 3 stations en service les plus proches, à cette distance au plus de la position de votre maison dans Gladys.",
+        "de": "Verfolge auch die 3 nächsten Stationen in Betrieb, höchstens so weit vom Standort deines Hauses in Gladys entfernt.",
+        "es": "Seguir también las 3 estaciones en servicio más cercanas, como máximo a esta distancia de la ubicación de su casa en Gladys."
+      },
+      "required": false,
+      "default": "0",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "en": "No",
+            "fr": "Non",
+            "de": "Nein",
+            "es": "No"
+          }
+        },
+        {
+          "value": "10",
+          "label": {
+            "en": "Within 10 km",
+            "fr": "À 10 km",
+            "de": "Im Umkreis von 10 km",
+            "es": "A 10 km"
+          }
+        },
+        {
+          "value": "20",
+          "label": {
+            "en": "Within 20 km",
+            "fr": "À 20 km",
+            "de": "Im Umkreis von 20 km",
+            "es": "A 20 km"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "Within 30 km",
+            "fr": "À 30 km",
+            "de": "Im Umkreis von 30 km",
+            "es": "A 30 km"
+          }
+        },
+        {
+          "value": "50",
+          "label": {
+            "en": "Within 50 km",
+            "fr": "À 50 km",
+            "de": "Im Umkreis von 50 km",
+            "es": "A 50 km"
+          }
+        }
+      ]
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de las funciones"
+      },
+      "description": {
+        "en": "Names given to the features of new devices (Groundwater depth, Situation…) and language of their texts (situation, last measurement).",
+        "fr": "Noms donnés aux fonctionnalités des nouveaux appareils (Profondeur de la nappe, Situation…) et langue de leurs textes (situation, dernière mesure).",
+        "de": "Namen der Funktionen neuer Geräte (Grundwassertiefe, Lage…) und Sprache ihrer Texte (Lage, letzte Messung).",
+        "es": "Nombres de las funciones de los nuevos dispositivos (Profundidad del acuífero, Situación…) e idioma de sus textos (situación, última medición)."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "search_stations",
+      "label": {
+        "en": "Find stations",
+        "fr": "Chercher des stations",
+        "de": "Stationen suchen",
+        "es": "Buscar estaciones"
+      },
+      "description": {
+        "en": "Lists the groundwater stations with their distance and last measurement: around your house, in a commune, a department or by code.",
+        "fr": "Liste les stations des nappes avec leur distance et leur dernière mesure : autour de votre maison, dans une commune, un département ou par code.",
+        "de": "Listet die Grundwassermessstellen mit Entfernung und letzter Messung auf: rund um dein Haus, in einer Gemeinde, einem Département oder per Code.",
+        "es": "Enumera las estaciones de aguas subterráneas con su distancia y última medición: alrededor de su casa, en un municipio, un departamento o por código."
+      },
+      "timeout_seconds": 60,
       "fields": [
         {
-          "key": "device",
+          "key": "query",
+          "type": "string",
+          "label": {
+            "en": "Where",
+            "fr": "Où",
+            "de": "Wo",
+            "es": "Dónde"
+          },
+          "description": {
+            "en": "Empty: around your house. Or a commune code (31555), a department (31), a station code.",
+            "fr": "Vide : autour de votre maison. Ou un code de commune (31555), un département (31), un code de station.",
+            "de": "Leer: rund um dein Haus. Oder ein Gemeindecode (31555), ein Département (31), ein Stationscode.",
+            "es": "Vacío: alrededor de su casa. O un código de municipio (31555), un departamento (31), un código de estación."
+          },
+          "placeholder": {
+            "en": "e.g. 31555",
+            "fr": "ex. 31555",
+            "de": "z. B. 31555",
+            "es": "p. ej. 31555"
+          },
+          "required": false
+        },
+        {
+          "key": "radius",
           "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "label": {
+            "en": "Distance around the house",
+            "fr": "Distance autour de la maison",
+            "de": "Entfernung um das Haus",
+            "es": "Distancia alrededor de la casa"
+          },
+          "description": {
+            "en": "20 km when empty.",
+            "fr": "20 km si vide.",
+            "de": "20 km, wenn leer.",
+            "es": "20 km si está vacío."
+          },
+          "required": false,
+          "options": [
+            {
+              "value": "10",
+              "label": {
+                "en": "10 km",
+                "fr": "10 km",
+                "de": "10 km",
+                "es": "10 km"
+              }
+            },
+            {
+              "value": "20",
+              "label": {
+                "en": "20 km",
+                "fr": "20 km",
+                "de": "20 km",
+                "es": "20 km"
+              }
+            },
+            {
+              "value": "30",
+              "label": {
+                "en": "30 km",
+                "fr": "30 km",
+                "de": "30 km",
+                "es": "30 km"
+              }
+            },
+            {
+              "value": "50",
+              "label": {
+                "en": "50 km",
+                "fr": "50 km",
+                "de": "50 km",
+                "es": "50 km"
+              }
+            }
+          ]
         }
       ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "situation_changed",
+      "label": {
+        "en": "Groundwater situation changes",
+        "fr": "La situation de la nappe change",
+        "de": "Grundwasserlage ändert sich",
+        "es": "La situación del acuífero cambia"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The estimated situation of a followed station changes, e.g. to low or very low.",
+        "fr": "La situation estimée d'une station suivie change, par exemple vers bas ou très bas.",
+        "de": "Die geschätzte Lage einer verfolgten Station ändert sich, z. B. auf niedrig oder sehr niedrig.",
+        "es": "La situación estimada de una estación seguida cambia, por ejemplo a bajo o muy bajo."
       },
       "fields": [
         {
-          "key": "device",
+          "key": "station",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Station",
+            "fr": "Station",
+            "de": "Station",
+            "es": "Estación"
+          }
         },
         {
-          "key": "target",
+          "key": "situation",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "New situation",
+            "fr": "Nouvelle situation",
+            "de": "Neue Lage",
+            "es": "Nueva situación"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "very_low",
+              "label": {
+                "en": "Very low",
+                "fr": "Très bas",
+                "de": "Sehr niedrig",
+                "es": "Muy bajo"
+              }
+            },
+            {
+              "value": "low",
+              "label": {
+                "en": "Low",
+                "fr": "Bas",
+                "de": "Niedrig",
+                "es": "Bajo"
+              }
+            },
+            {
+              "value": "normal",
+              "label": {
+                "en": "Normal",
+                "fr": "Normal",
+                "de": "Normal",
+                "es": "Normal"
+              }
+            },
+            {
+              "value": "high",
+              "label": {
+                "en": "High",
+                "fr": "Haut",
+                "de": "Hoch",
+                "es": "Alto"
+              }
+            },
+            {
+              "value": "very_high",
+              "label": {
+                "en": "Very high",
+                "fr": "Très haut",
+                "de": "Sehr hoch",
+                "es": "Muy alto"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "station_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Station name",
+            "fr": "Nom de la station",
+            "de": "Name der Station",
+            "es": "Nombre de la estación"
+          }
+        },
+        {
+          "key": "situation",
+          "type": "string",
+          "label": {
+            "en": "Situation (very_low … very_high)",
+            "fr": "Situation (very_low … very_high)",
+            "de": "Lage (very_low … very_high)",
+            "es": "Situación (very_low … very_high)"
+          }
+        },
+        {
+          "key": "situation_name",
+          "type": "string",
+          "label": {
+            "en": "Situation, in words",
+            "fr": "Situation, en toutes lettres",
+            "de": "Lage, ausgeschrieben",
+            "es": "Situación, en palabras"
+          }
+        },
+        {
+          "key": "previous_situation",
+          "type": "string",
+          "label": {
+            "en": "Previous situation",
+            "fr": "Situation précédente",
+            "de": "Vorherige Lage",
+            "es": "Situación anterior"
+          }
+        },
+        {
+          "key": "previous_situation_name",
+          "type": "string",
+          "label": {
+            "en": "Previous situation, in words",
+            "fr": "Situation précédente, en toutes lettres",
+            "de": "Vorherige Lage, ausgeschrieben",
+            "es": "Situación anterior, en palabras"
+          }
+        },
+        {
+          "key": "depth",
+          "type": "number",
+          "label": {
+            "en": "Depth (m)",
+            "fr": "Profondeur (m)",
+            "de": "Tiefe (m)",
+            "es": "Profundidad (m)"
+          }
+        },
+        {
+          "key": "level",
+          "type": "number",
+          "label": {
+            "en": "Level (m NGF)",
+            "fr": "Niveau (m NGF)",
+            "de": "Stand (m NGF)",
+            "es": "Nivel (m NGF)"
+          }
         }
       ]
-    }
-  ],
-  "scene_actions": [
+    },
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "station_silent",
+      "label": {
+        "en": "Station without measurement",
+        "fr": "Station sans mesure",
+        "de": "Station ohne Messung",
+        "es": "Estación sin medición"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "A followed station has sent no new measurement for 7, 15, 30 or 60 days.",
+        "fr": "Une station suivie n'a plus envoyé de mesure depuis 7, 15, 30 ou 60 jours.",
+        "de": "Eine verfolgte Station hat seit 7, 15, 30 oder 60 Tagen keine neue Messung gesendet.",
+        "es": "Una estación seguida no ha enviado ninguna medición desde hace 7, 15, 30 o 60 días."
+      },
       "fields": [
         {
-          "key": "device",
+          "key": "station",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "label": {
+            "en": "Station",
+            "fr": "Station",
+            "de": "Station",
+            "es": "Estación"
+          }
+        },
+        {
+          "key": "days",
+          "type": "multi_select",
+          "label": {
+            "en": "Days without measurement",
+            "fr": "Jours sans mesure",
+            "de": "Tage ohne Messung",
+            "es": "Días sin medición"
+          },
+          "options": [
+            {
+              "value": "7",
+              "label": {
+                "en": "7 days",
+                "fr": "7 jours",
+                "de": "7 Tage",
+                "es": "7 días"
+              }
+            },
+            {
+              "value": "15",
+              "label": {
+                "en": "15 days",
+                "fr": "15 jours",
+                "de": "15 Tage",
+                "es": "15 días"
+              }
+            },
+            {
+              "value": "30",
+              "label": {
+                "en": "30 days",
+                "fr": "30 jours",
+                "de": "30 Tage",
+                "es": "30 días"
+              }
+            },
+            {
+              "value": "60",
+              "label": {
+                "en": "60 days",
+                "fr": "60 jours",
+                "de": "60 Tage",
+                "es": "60 días"
+              }
+            }
+          ]
         }
       ],
-      "outputs": [
+      "variables": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "station_name",
+          "type": "string",
+          "label": {
+            "en": "Station name",
+            "fr": "Nom de la station",
+            "de": "Name der Station",
+            "es": "Nombre de la estación"
+          }
+        },
+        {
+          "key": "days",
+          "type": "string",
+          "label": {
+            "en": "Days without measurement",
+            "fr": "Jours sans mesure",
+            "de": "Tage ohne Messung",
+            "es": "Días sin medición"
+          }
+        },
+        {
+          "key": "last_measurement",
+          "type": "string",
+          "label": {
+            "en": "Date of the last measurement",
+            "fr": "Date de la dernière mesure",
+            "de": "Datum der letzten Messung",
+            "es": "Fecha de la última medición"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "stations",
+      "label": {
+        "en": "Groundwater",
+        "fr": "Nappes phréatiques",
+        "de": "Grundwasser",
+        "es": "Aguas subterráneas"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Followed stations: depth of the water table, situation and trend.",
+        "fr": "Stations suivies : profondeur de la nappe, situation et tendance.",
+        "de": "Verfolgte Stationen: Grundwassertiefe, Lage und Tendenz.",
+        "es": "Estaciones seguidas: profundidad del acuífero, situación y tendencia."
+      },
+      "icon": "droplet",
+      "settings": [
+        {
+          "key": "station",
+          "type": "select",
+          "source": "devices",
+          "required": false,
+          "label": {
+            "en": "Station",
+            "fr": "Station",
+            "de": "Station",
+            "es": "Estación"
+          },
+          "description": {
+            "en": "Leave empty to list every station (10 at most); pick one for its details.",
+            "fr": "Laissez vide pour lister toutes les stations (10 au plus) ; choisissez-en une pour son détail.",
+            "de": "Leer lassen, um alle Stationen aufzulisten (höchstens 10); wähle eine für ihre Details.",
+            "es": "Déjelo vacío para listar todas las estaciones (10 como máximo); elija una para ver su detalle."
+          }
+        }
+      ]
     }
   ]
 }

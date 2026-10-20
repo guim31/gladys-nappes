@@ -30,6 +30,13 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration needs no secret: Hub'Eau is a public, keyless API, read over
+HTTPS. It stores in `/data/nappes.json` only public data (the followed stations,
+their daily history and last measurements, the last situations) and the radius
+chosen around the house, never its coordinates. It reads the location of the
+house from Gladys (`location: true`) to choose the nearest stations, and sends
+Hub'Eau only a box rounded to 0.05° around it. It opens no port.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the Hub'Eau service and its data.

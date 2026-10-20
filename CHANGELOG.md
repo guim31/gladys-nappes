@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-20
+
 ### Added
 
 - One device per groundwater station of the French ADES network (Hub'Eau
@@ -25,4 +27,5 @@ the notes of the version's GitHub Release.
   the detail of one station.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-nappes/commits/main
+[Unreleased]: https://github.com/guim31/gladys-nappes/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-nappes/releases/tag/v1.0.0

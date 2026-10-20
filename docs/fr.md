@@ -1,67 +1,161 @@
-# Template de démonstration
+# Nappes phréatiques
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Le **niveau des nappes phréatiques près de chez vous**, d'après les piézomètres publics du réseau ADES
+(BRGM), lus par l'API ouverte [Hub'Eau Piézométrie](https://hubeau.eaufrance.fr/page/api-piezometrie).
+Sans compte ni clé.
+
+Chaque station (un piézomètre, un forage où l'on mesure la nappe) devient un appareil Gladys : la
+profondeur de la nappe, son niveau, la date de la dernière mesure, et une **situation** (très basse à
+très haute) que cette intégration estime d'après l'historique de la station.
+
+> La situation est une estimation de cette intégration, **pas l'indicateur officiel du BRGM** (l'« IPS »
+> mensuel des bulletins de situation des nappes). Non affiliée au BRGM ni à Hub'Eau.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- **Un appareil par station** : profondeur de la nappe sous le sol (m), son niveau (m NGF, le
+  nivellement général de la France), un indice de situation de 1 (très bas) à 5 (très haut), la
+  situation en toutes lettres et la date de la dernière mesure.
+- **Des stations par code ou autour de votre maison** (les 3 plus proches qui mesurent encore, d'après
+  la position de votre maison dans Gladys).
+- **« Chercher des stations »** dans l'écran de configuration : les stations autour de votre maison,
+  dans une commune ou un département, avec leur distance, leur première année et leur dernière mesure.
+- **Déclencheurs de scène** : _La situation de la nappe change_ (filtré par station et par nouvelle
+  situation) et _Station sans mesure_ (7, 15, 30 ou 60 jours).
+- **Widget** : les stations suivies avec leur profondeur, leur situation et la tendance de la
+  semaine, ou le détail d'une station.
+
+Voisines : [Vigicrues](https://github.com/guim31/gladys-vigicrues) donne les cours d'eau (hauteur,
+débit, vigilance crues), l'intégration [VigiEau](https://github.com/prohand/gladys-vigieau) les restrictions d'eau officielles de votre commune :
+toutes deux complètent celle-ci.
+
+## Prérequis
+
+- Gladys Assistant 5.1.0 ou plus récent (widget et déclencheurs de scène).
+- Un accès Internet de Gladys vers `hubeau.eaufrance.fr`.
+- Pour « autour de ma maison » : une position pour votre maison dans Gladys (Paramètres, Maisons).
+- France métropolitaine et départements d'outre-mer seulement (le réseau ADES).
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+### Réglages
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+| Réglage                            | Rôle                                                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Codes des stations                 | Codes BSS séparés par des virgules, nouveaux (`BSS002FVWC`) ou anciens (`09838D0727/F`).            |
+| Autour de ma maison                | Suivre aussi les 3 stations en service les plus proches, à 10, 20, 30 ou 50 km de votre maison.     |
+| Langue des noms de fonctionnalités | Noms des fonctionnalités des nouveaux appareils, et langue des textes (situation, dernière mesure). |
 
-## Actions
+Enregistrez, puis ouvrez l'onglet **Découverte** et créez les appareils voulus. Une station dont vous
+avez créé l'appareil reste suivie même si vous la retirez de la configuration ; supprimer l'appareil
+l'arrête. La configuration suit 10 stations au plus.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+### Trouver vos stations
 
-## Scènes
+L'action **Chercher des stations** de l'écran de configuration liste les stations avec leur code, leur
+distance à votre maison, l'année de leur première mesure et la date de la dernière :
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+- laissez **Où** vide : les stations en service autour de votre maison (20 km, ou la distance choisie) ;
+- un code INSEE de commune (`31555` pour Toulouse) : toutes les stations de la commune, celles en
+  service d'abord ;
+- un numéro de département (`31`, `2A`, `974`) : les stations en service du département ;
+- un code de station, nouveau ou ancien.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+Copiez le code (`BSS…`) dans **Codes des stations**, puis enregistrez. Les piézomètres en service sont
+rares (une douzaine en Haute-Garonne) : préférez une station sur la même nappe que votre puits ou votre
+jardin, indiquée dans les paramètres de l'appareil (`AQUIFER`). Le [portail ADES](https://ades.eaufrance.fr)
+les montre sur une carte.
 
-## Tableau de bord
+## Appareils
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+| Fonctionnalité              | Type                     | Contenu                                                                   |
+| --------------------------- | ------------------------ | ------------------------------------------------------------------------- |
+| Profondeur de la nappe      | Profondeur du liquide, m | Profondeur de la nappe sous le sol (négative : au-dessus, puits artésien) |
+| Niveau de la nappe (m NGF)  | Profondeur du liquide, m | Altitude de la nappe                                                      |
+| Indice de situation (1 à 5) | Compteur                 | 1 très bas, 2 bas, 3 normal, 4 haut, 5 très haut                          |
+| Situation de la nappe       | Texte                    | La situation en toutes lettres, ou pourquoi elle est inconnue             |
+| Dernière mesure             | Texte                    | Date de la mesure la plus récente (avec l'heure pour le temps réel)       |
+
+La profondeur et le niveau ne sont plus publiés 45 jours après la dernière mesure ; « Dernière mesure »
+dit toujours quand elle date. Une station relevée à la main une fois par mois, c'est normal.
+Quand la situation devient inconnue, l'indice garde sa dernière valeur : une condition de scène sur
+l'indice doit aussi vérifier que « Situation de la nappe » n'est pas inconnue.
+
+### Comment la situation est estimée
+
+Le niveau moyen des 10 derniers jours est classé parmi les niveaux moyens des mêmes 31 jours (la même
+date ± 15 jours) de chaque année précédente de la station. Plus bas que 90 % des années : très bas ;
+plus bas que 70 % : bas ; entre les deux : normal ; plus haut que 70 % : haut ; plus haut que 90 % :
+très haut. Il faut au moins 10 ans d'historique et une mesure de moins de 30 jours ; sinon la situation
+est « inconnue », avec la raison. Ce n'est pas l'indicateur officiel du BRGM, qui travaille sur des
+moyennes mensuelles standardisées : les deux concordent le plus souvent, pas toujours.
+
+## Widget
+
+Ajoutez le widget **Nappes phréatiques** à un tableau de bord :
+
+- sans station : une ligne par station suivie avec sa profondeur et sa situation, colorée selon la
+  situation (rouge très bas, jaune bas, vert normal, bleu haut et très haut), l'icône donnant la
+  tendance de la semaine (monte, stable, baisse) ;
+- avec une station : sa profondeur et son niveau en direct, sa situation, sa tendance, sa dernière
+  mesure, et un lien vers sa fiche sur le portail ADES.
+
+## Déclencheurs de scène
+
+**La situation de la nappe change** : la situation estimée d'une station change. Filtres : la station,
+et les nouvelles situations (très bas, bas, normal, haut, très haut). Variables : nom de la station,
+situation (clé et toutes lettres), situation précédente (clé et toutes lettres), profondeur, niveau.
+
+**Station sans mesure** : une station suivie n'a rien envoyé depuis 7, 15, 30 ou 60 jours. Chaque durée
+se déclenche une fois par silence ; après un long arrêt de Gladys, seule la plus longue franchie se
+déclenche. Variables : nom de la station, jours, date de la dernière mesure.
+
+Un seuil de profondeur (« plus de 8 m ») est une condition de scène sur l'état de l'appareil : les
+déclencheurs ne filtrent que par égalité.
+
+## Exemples de scènes
+
+- **Puits à surveiller** : quand la situation de votre station passe à _bas_ ou _très bas_, envoyer
+  « Nappe {{situation_name}} à {{station_name}} : arrosez avec modération ».
+- **Retour à la normale** : quand la situation passe à _normal_, envoyer un message et réactiver la
+  scène d'arrosage du jardin.
+- **Données périmées** : quand votre station est muette depuis 30 jours, envoyer un rappel pour en
+  choisir une autre avec « Chercher des stations ».
+- **Point hebdomadaire** : chaque lundi, envoyer les valeurs « Situation de la nappe » et « Profondeur
+  de la nappe ».
+
+## Sources des données, licence et quotas
+
+- Données : [Hub'Eau Piézométrie](https://hubeau.eaufrance.fr/page/api-piezometrie) v1, issues
+  d'ADES (BRGM et partenaires), sous **Licence Ouverte Etalab 2.0** ; le widget cite la source et la
+  date.
+- Requêtes : tout l'historique journalier d'une station une fois (environ 1 Mo, quelques secondes),
+  puis toutes les 6 heures deux petites requêtes par station (les valeurs journalières de la dernière
+  semaine, la valeur temps réel la plus récente) ; l'historique est relu tous les 90 jours. Hub'Eau ne
+  publie pas de quota : ce rythme reste très en dessous de toute limite raisonnable.
+- Les valeurs journalières arrivent en général le lendemain ; les valeurs temps réel toutes les heures,
+  pour les stations qui en envoient, parfois avec quelques jours de retard.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Code de station inconnu »** : le code n'existe pas dans Hub'Eau. Utilisez « Chercher des
+  stations » et copiez le code donné.
+- **« Aucune station en service à cette distance »** : choisissez une distance plus grande, ou une
+  station par code.
+- **« Hub'Eau ne répond pas »** : le service est en panne ou lent ; les valeurs reviennent seules.
+- **Situation « inconnue : moins de 10 ans d'historique »** : la station est trop récente pour une
+  estimation. La profondeur et le niveau restent publiés.
+- **Situation « inconnue : pas de mesure récente »** : la station n'a rien envoyé depuis 30 jours.
+- **« Pas de valeur récente » sur la profondeur** : la dernière mesure date de plus de 45 jours ; voir
+  « Dernière mesure ».
+- Journaux : `LOG_LEVEL=debug` montre chaque cycle de lecture.
+
+## Limites
+
+- France seulement (réseau ADES), et seulement les piézomètres publics : pas votre propre puits.
+- La situation est une estimation, pas l'indicateur officiel du BRGM ; une nappe captive ou exploitée
+  peut rester « très basse » des années.
+- Mise à jour toutes les 6 heures : les nappes bougent lentement et les données sont journalières.
+- 10 stations au plus depuis la configuration.
+- Développée et testée avec les vraies données de stations autour de Toulouse ; vos retours sont
+  bienvenus.

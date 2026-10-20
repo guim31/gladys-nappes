@@ -31,16 +31,24 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        handlers → monitor, the `search_stations` action, the widget
+src/monitor.js                    followed stations, refresh cycles (own 6 h timer), states, triggers
+src/situation.js                  situation (rank among the previous years), trend, newest measurement
+src/hubeau.js                     Hub'Eau Piézométrie v1 client: stations, chroniques, chroniques_tr
+src/http.js                       GET JSON with timeout and User-Agent
+src/search.js                     "Find stations" action
+src/devices.js                    Gladys device of a station (features, four-language names)
+src/widgets.js                    `stations` dashboard widget
+src/messages.js                   texts sent from the container (en, fr, de, es), situation names
+src/geo.js                        distances, box around the house (rounded to 0.05°)
+src/store.js                      /data/nappes.json
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+gladys-assistant-integration.json manifest: name, config_schema, actions, triggers, widget...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys, same sections
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/helpers/world.js             fake Gladys + fake Hub'Eau serving the recorded answers
+test/fixtures/                    recorded real answers of Hub'Eau (see its README)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +78,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, manifest texts, feature names, widget texts, and `docs/en.md`,
+  `docs/fr.md`, `docs/de.md`, `docs/es.md`, kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +242,34 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Propre à cette intégration (Nappes phréatiques, 20/10/2026)
+
+- **Source** : Hub'Eau Piézométrie v1 (`hubeau.eaufrance.fr/api/v1/niveaux_nappes`), sans clé,
+  Licence Ouverte Etalab 2.0 (source et date citées par le widget). Aucun quota publié : une
+  lecture toutes les 6 h, deux petites requêtes par station, l'historique complet une fois puis
+  tous les 90 jours.
+- **Pièges de l'API** (relevés en direct le 20/10/2026) : le filtre `latitude`/`longitude`/`distance`
+  cité dans le brief **n'existe pas** (ignoré : toute la France revient) ; passer par `bbox`.
+  `date_recherche` garde les stations dont la dernière mesure est postérieure. `chroniques`
+  accepte 2 codes au plus et **20 000 lignes par page** (au-delà : 503) ; un historique complet
+  pèse ~1 Mo et met plusieurs secondes (délai porté à 120 s). `chroniques_tr` nomme le niveau
+  `niveau_eau_ngf` (et non `niveau_nappe_eau`), date en UTC, et peut retarder de quelques jours
+  sur `chroniques`. `altitude_station` est une **chaîne**. 206 + `next` pour une page suivie.
+- **Codes** : le nouveau code BSS (`BSS` + 7 caractères, `BSS002FVWC`) est l'identifiant des
+  appareils ; l'ancien (`09838D0727/F`, avec une barre oblique) est accepté en configuration et
+  converti (`aliases` dans `/data`).
+- **Situation** : estimation maison, à ne jamais présenter comme l'IPS du BRGM. Moyenne des 10
+  derniers jours classée parmi les moyennes des mêmes 31 jours des années précédentes (10 ans au
+  moins, mesure de moins de 30 jours), égalités au centimètre comptées pour moitié. Publiée en
+  `counter-sensor/integer` 1-5 (pour les conditions de scène) et en texte. `risk/integer` écarté :
+  sa pastille va de 0 à 3 et ne dit pas « haut ».
+- **Silence** : une valeur journalière est datée midi UTC. Le déclencheur `station_silent` passe
+  une fois par seuil (7, 15, 30, 60 jours, mémorisés dans `/data`), jamais à la première vue
+  d'une station déjà muette ; après un long arrêt, seul le seuil le plus long franchi part.
+- La boîte envoyée à Hub'Eau autour de la maison est arrondie à 0,05° ; la position n'est écrite
+  ni dans `/data` ni dans les logs.
+- **Revue du 20/10/2026, corrigée** : une panne de Hub'Eau ou de `getHouses()` ne doit ni vider
+  `/data` (pas d'élagage tant que la résolution est incomplète), ni déclencher `station_silent`
+  (seules les stations lues au cycle sont jugées) ; hystérésis d'une année (1/N) sur la classe de
+  situation ; l'historique se pagine **par date** (`date_debut_mesure`), jamais par `page`.

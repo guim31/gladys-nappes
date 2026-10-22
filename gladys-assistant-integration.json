@@ -8,8 +8,8 @@
     "de": "Tiefe, Stand und Lage des Grundwassers nahe deinem Zuhause (Frankreich), über Hub'Eau und BRGM.",
     "es": "Profundidad, nivel y situación de las aguas subterráneas cerca de su casa (Francia), por Hub'Eau."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-nappes:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-nappes:1.0.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-nappes/main/cover.png",
   "categories": ["environment"],

@@ -1,6 +1,6 @@
 {
   "name": "gladys-nappes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Gladys Assistant integration: groundwater depth, level and situation of French piezometers (Hub'Eau, BRGM).",
   "type": "module",

@@ -32,7 +32,7 @@ restrictions).
 
 ## Requirements
 
-- Gladys Assistant **5.1.0** or later (widget and scene triggers).
+- Gladys Assistant **5.3.0** or later (catalog countries; 5.1.0 for widget and scene triggers).
 - Internet access from Gladys to `hubeau.eaufrance.fr`.
 - For "around my house": the location of your house in Gladys. The integration declares
   `location: true`, shown on the install screen.

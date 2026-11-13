@@ -31,7 +31,7 @@ ambas complementan a esta.
 
 ## Requisitos
 
-- Gladys Assistant 5.1.0 o posterior (widget y disparadores de escena).
+- Gladys Assistant 5.3.0 o posterior (países del catálogo; 5.1.0 para widget y disparadores de escena).
 - Acceso a Internet desde Gladys hacia `hubeau.eaufrance.fr`.
 - Para «alrededor de mi casa»: una ubicación para su casa en Gladys (Ajustes, Casas).
 - Solo Francia (metrópoli y departamentos de ultramar, la red ADES).

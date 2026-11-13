@@ -31,7 +31,7 @@ Gemeinde: Beide ergänzen diese hier.
 
 ## Voraussetzungen
 
-- Gladys Assistant 5.1.0 oder neuer (Widget und Szenen-Auslöser).
+- Gladys Assistant 5.3.0 oder neuer (Länder im Katalog; 5.1.0 für Widget und Szenen-Auslöser).
 - Internetzugang von Gladys zu `hubeau.eaufrance.fr`.
 - Für „Rund um mein Haus“: ein Standort für dein Haus in Gladys (Einstellungen, Häuser).
 - Nur Frankreich (Festland und Überseedépartements, das ADES-Netz).

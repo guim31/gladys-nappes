@@ -31,7 +31,7 @@ toutes deux complètent celle-ci.
 
 ## Prérequis
 
-- Gladys Assistant 5.1.0 ou plus récent (widget et déclencheurs de scène).
+- Gladys Assistant 5.3.0 ou plus récent (pays du catalogue ; 5.1.0 pour widget et déclencheurs de scène).
 - Un accès Internet de Gladys vers `hubeau.eaufrance.fr`.
 - Pour « autour de ma maison » : une position pour votre maison dans Gladys (Paramètres, Maisons).
 - France métropolitaine et départements d'outre-mer seulement (le réseau ADES).
